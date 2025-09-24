@@ -1,0 +1,18 @@
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>BIT Studyroom – IT1506 - Fundamentals of Mathematics</title>
+    <link>http://localhost:1313/semester-one/it1506-fundamentals-of-mathematics/numbers-and-arithmetic-operations/</link>
+    <description>Recent content in IT1506 - Fundamentals of Mathematics on BIT Studyroom</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en</language>
+    
+	  <atom:link href="http://localhost:1313/semester-one/it1506-fundamentals-of-mathematics/numbers-and-arithmetic-operations/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+      
+        
+      
+    
+    
+  </channel>
+</rss>

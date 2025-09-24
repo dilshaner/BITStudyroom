@@ -1,0 +1,16 @@
+{{/* layouts/shortcodes/announcement.html */}}
+<div class="hx:flex hx:flex-col hx:items-center hx:w-full hx:gap-6">
+  {{ range .Page.Params.announcements }}
+    <div class="hx:w-full hx:max-w-[800px] hx:p-6 hx:border-2 hx:border-gray-300 hx:dark:border-gray-600 hx:bg-gray-50 hx:dark:bg-gray-800 hx:rounded-md">
+      <h2 class="hx:text-2xl hx:font-bold hx:text-gray-900 hx:dark:text-white! hx:mb-2">
+        {{ .datetime | time.Format "January 2, 2006, 3:04 PM" }}
+      </h2>
+      <p class="hx:text-gray-600 hx:dark:text-gray-300 hx:mb-2">
+        <span class="hx:font-semibold">By:</span> {{ .author | safeHTML }}
+      </p>
+      <p class="hx:text-gray-800 hx:dark:text-gray-200">
+        {{ .text | safeHTML }}
+      </p>
+    </div>
+  {{ end }}
+</div>

@@ -1,0 +1,88 @@
+{{- $units := .Get "units" | default .Page.Params.units -}}
+{{- $source := .Get "source" | default "youtube" -}}
+{{- $loading := .Get "loading" | default "lazy" -}}
+
+{{- if not $units -}}
+  {{- errorf "No units provided for video-player shortcode in %s" .Page.Path -}}
+{{- end -}}
+<div class="hx:mb-4"></div>
+<div class="video-player-wrapper hextra-feature-card not-prose hx:max-w-5xl hx:mx-auto hx:-mt-15 hx:rounded-3xl hx:border hx:border-gray-200 hx:hover:border-gray-300 hx:dark:border-neutral-800 hx:dark:hover:border-neutral-700 hx:overflow-hidden hx:bg-white hx:dark:bg-neutral-900 hx:before:pointer-events-none hx:before:absolute hx:before:inset-0 hx:before:bg-glass-gradient">
+  <div class="video-selector hx:p-6 hx:border-b hx:border-gray-200 hx:dark:border-neutral-800">
+    <label for="video-select" class="hx:text-base hx:font-medium hx:text-gray-600 hx:dark:text-gray-400 hx:mr-2">Select Unit:</label>
+    <select id="video-select" class="hx:p-2 hx:rounded-md hx:border hx:border-gray-300 hx:bg-white hx:dark:bg-neutral-800 hx:dark:border-neutral-700 hx:dark:text-gray-200 hx:text-base hx:font-normal" onchange="updateVideo(this)">
+      {{- range $index, $unit := $units -}}
+        <option value="{{ $index }}" data-id="{{ $unit.id }}" data-source="{{ $unit.source | default $source }}" data-description="{{ $unit.description | markdownify | safeJS }}" data-pdf="{{ $unit.pdf | safeURL }}" data-title="{{ $unit.title }}">{{ $unit.title }}</option>
+      {{- end -}}
+    </select>
+  </div>
+<!-- Video container with responsive aspect ratio -->
+
+<div class="video-container" style="width: 100%; aspect-ratio: 16/9;">
+    <iframe id="video-iframe" 
+      src="https://www.youtube.com/embed/{{ (index $units 0).id }}?start=0" 
+      class="hx:w-full hx:h-full" 
+      style="width: 100%; height: 100%;"
+      frameborder="0" 
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+      allowfullscreen 
+      loading="{{ $loading }}"
+      retina-ready
+    ></iframe>
+  </div>
+  <!-- Video metadata section -->
+
+  <div class="video-meta hx:p-6 hx:border-t hx:border-gray-200 hx:dark:border-neutral-800">
+    <div class="description hx:text-base hx:leading-6 hx:text-gray-500 hx:dark:text-gray-400 hx:mb-2" id="video-description">
+      {{ (index $units 0).description | markdownify }}
+    </div>
+    {{- with (index $units 0).pdf -}}
+      <div class="pdf-download hx:flex hx:items-center hx:gap-2" id="video-pdf">
+        <a href="{{ . | safeURL }}" title="Download PDF" target="_blank" class="hx:text-sm hx:font-medium hx:text-blue-600 hx:dark:text-blue-400 hx:no-underline hx:hover:text-blue-700 hx:dark:hover:text-blue-300">
+          <span class="hx:flex hx:items-center hx:gap-2">
+            {{- partial "utils/icon.html" (dict "name" "download" "attributes" "height=1.25rem class=hx:inline-block") -}}
+            Download PDF
+          </span>
+        </a>
+      </div>
+    {{- end -}}
+  </div>
+</div>
+
+<script>
+function updateVideo(select) {
+  const option = select.options[select.selectedIndex];
+  const iframe = document.getElementById('video-iframe');
+  const description = document.getElementById('video-description');
+  const pdfDiv = document.getElementById('video-pdf');
+  
+  const id = option.getAttribute('data-id');
+  const source = option.getAttribute('data-source');
+  const descriptionText = option.getAttribute('data-description');
+  const pdf = option.getAttribute('data-pdf');
+  
+  // Update iframe source based on video platform
+  if (source === 'youtube') {
+    iframe.src = `https://www.youtube.com/embed/${id}?start=0`;
+  } else if (source === 'vimeo') {
+    iframe.src = `https://player.vimeo.com/video/${id}`;
+  }
+  
+  // Update description
+  description.innerHTML = descriptionText || '';
+  
+  // Update PDF link
+  if (pdf) {
+    pdfDiv.innerHTML = `
+      <a href="${pdf}" title="Download PDF" target="_blank" class="hx:text-sm hx:font-medium hx:text-blue-600 hx:dark:text-blue-400 hx:no-underline hx:hover:text-blue-700 hx:dark:hover:text-blue-300">
+        <span class="hx:flex hx:items-center hx:gap-2">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="hx:inline-block">
+            <path d="M12 16V8M12 16L9 13M12 16L15 13M6 20H18C19.1 20 20 19.1 20 18V6C20 4.9 19.1 4 18 4H6C4.9 4 4 4.9 4 6V18C4 19.1 4.9 20 6 20Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Download PDF
+        </span>
+      </a>`;
+  } else {
+    pdfDiv.innerHTML = '';
+  }
+}
+</script>

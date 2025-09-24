@@ -1,0 +1,171 @@
+<div class="mcq-quiz-container not-prose">
+  {{- $questions := split .Inner "---" -}}
+  {{- range $i, $question := $questions -}}
+    {{- $question = trim $question "\n" -}}
+    {{- if $question -}}
+      {{- $lines := split $question "\n" -}}
+      {{- $questionText := index $lines 0 -}}
+      {{- $options := slice -}}
+      
+      {{- range $j, $line := $lines -}}
+        {{- if gt $j 0 -}}
+          {{- $line = trim $line "\n" -}}
+          {{- if $line -}}
+            {{- $isCorrect := hasPrefix $line "*" -}}
+            {{- $optionText := trim (strings.TrimPrefix "*" $line) "\n" -}}
+            {{- $parts := split $optionText "-" -}}
+            {{- $optionLetter := index $parts 0 -}}
+            {{- $optionValue := trim (substr $optionText (len $optionLetter) (sub (len $optionText) (len $optionLetter))) " -" -}}
+            
+            {{- $options = $options | append (dict 
+              "letter" $optionLetter
+              "text" $optionValue
+              "isCorrect" $isCorrect
+            ) -}}
+          {{- end -}}
+        {{- end -}}
+      {{- end -}}
+      
+      <div class="mcq-card bg-white rounded-xl shadow-md border border-gray-100 p-6 mb-6 transition-all hover:shadow-lg dark:bg-neutral-900 dark:border-neutral-800">
+        <div class="flex items-start gap-3 mb-5">
+          <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-primary-50 text-sm font-medium text-primary-600 dark:bg-primary-900/30 dark:text-primary-400">
+            {{ add $i 1 }}
+          </span>
+          <h3 class="text-lg font-medium text-gray-900 dark:text-white">{{ $questionText }}</h3>
+        </div>
+        
+        <div class="space-y-3">
+          {{- range $options -}}
+            <div class="option-item">
+              <input 
+                type="checkbox" 
+                id="mcq-{{ $i }}-{{ .letter }}" 
+                class="peer hidden"
+                data-correct="{{ .isCorrect }}"
+              >
+              <label 
+                for="mcq-{{ $i }}-{{ .letter }}" 
+                class="flex cursor-pointer items-center gap-3 rounded-lg bg-gray-50 p-3.5 transition-all hover:bg-gray-100 peer-checked:bg-primary-50 peer-checked:ring-2 peer-checked:ring-primary-500/20 dark:bg-neutral-800/30 dark:hover:bg-neutral-800/50 dark:peer-checked:bg-primary-900/20"
+              >
+                <span class="flex h-5 w-5 items-center justify-center rounded border border-gray-300 bg-white text-xs font-medium peer-checked:border-primary-500 peer-checked:bg-primary-500 peer-checked:text-white dark:border-neutral-600 dark:bg-neutral-700 dark:peer-checked:border-primary-500">
+                  {{ .letter }}
+                </span>
+                <span class="text-gray-800 dark:text-neutral-200">{{ .text }}</span>
+              </label>
+            </div>
+          {{- end -}}
+        </div>
+        
+        <div class="result mt-4 hidden text-sm" id="result-{{ $i }}"></div>
+      </div>
+    {{- end -}}
+  {{- end -}}
+  
+  <div class="mt-8 flex justify-center">
+    <button
+      onclick="checkMcqAnswers()"
+      class="inline-flex items-center justify-center gap-2 rounded-lg bg-primary-600 px-6 py-3 text-sm font-medium text-white transition-all hover:bg-primary-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
+    >
+      Check Answers
+    </button>
+  </div>
+</div>
+
+<script>
+function checkMcqAnswers() {
+  const quiz = document.querySelector('.mcq-quiz-container');
+  const cards = quiz.querySelectorAll('.mcq-card');
+  let allCorrect = true;
+
+  cards.forEach((card, index) => {
+    const options = card.querySelectorAll('input');
+    const result = card.querySelector('.result');
+    let correctCount = 0;
+    let selectedCorrect = 0;
+    let selectedIncorrect = 0;
+
+    // Count correct answers
+    options.forEach(opt => {
+      if (opt.dataset.correct === "true") correctCount++;
+    });
+
+    // Evaluate selections
+    options.forEach(opt => {
+      const label = opt.nextElementSibling;
+      
+      // Reset styling
+      label.classList.remove(
+        'border-green-500', 'bg-green-50',
+        'border-red-500', 'bg-red-50',
+        'border-yellow-500', 'bg-yellow-50'
+      );
+
+      if (opt.checked) {
+        if (opt.dataset.correct === "true") {
+          selectedCorrect++;
+          label.classList.add('border-green-500', 'bg-green-50');
+        } else {
+          selectedIncorrect++;
+          label.classList.add('border-red-500', 'bg-red-50');
+        }
+      } else if (opt.dataset.correct === "true") {
+        label.classList.add('border-yellow-500', 'bg-yellow-50');
+      }
+    });
+
+    // Show result
+    result.classList.remove('hidden');
+    result.className = 'result mt-4 text-sm flex items-center gap-2';
+    
+    if (selectedCorrect === correctCount && selectedIncorrect === 0) {
+      result.innerHTML = `
+        <svg class="h-4 w-4 text-green-500" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+        </svg>
+        <span class="text-green-600 dark:text-green-400">All correct!</span>
+      `;
+    } else if (selectedIncorrect > 0) {
+      result.innerHTML = `
+        <svg class="h-4 w-4 text-red-500" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+        </svg>
+        <span class="text-red-600 dark:text-red-400">Incorrect answers</span>
+      `;
+      allCorrect = false;
+    } else if (selectedCorrect > 0) {
+      result.innerHTML = `
+        <svg class="h-4 w-4 text-yellow-500" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+        </svg>
+        <span class="text-yellow-600 dark:text-yellow-400">Partially correct</span>
+      `;
+      allCorrect = false;
+    } else {
+      result.innerHTML = '<span class="text-gray-500 dark:text-gray-400">No selection</span>';
+      allCorrect = false;
+    }
+  });
+
+  // Show success notification
+  if (allCorrect) {
+    const notification = document.createElement('div');
+    notification.className = 'fixed bottom-4 left-1/2 z-50 flex -translate-x-1/2 items-center gap-2 rounded-lg border border-green-200 bg-green-50/95 px-4 py-3 text-sm font-medium text-green-800 shadow-lg backdrop-blur-sm dark:border-green-900 dark:bg-green-900/95 dark:text-green-200';
+    notification.innerHTML = '🎉 Perfect! All answers correct!';
+    
+    document.body.appendChild(notification);
+    setTimeout(() => notification.remove(), 3000);
+  }
+}
+</script>
+
+<style>
+.mcq-quiz-container {
+  font-family: inherit;
+}
+
+@media (max-width: 640px) {
+  .mcq-card {
+    padding: 1.25rem;
+  }
+}
+</style>
